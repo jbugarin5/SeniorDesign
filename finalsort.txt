@@ -1,0 +1,645 @@
+import json
+import urllib.parse
+import boto3
+import string
+import re
+
+print('Loading function')
+word = "Sample"
+s3 = boto3.client('s3')
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+table = dynamodb.Table('Sort_Distlog_1')
+
+def changeTime(time):
+	timec = str(time)
+	date = {}
+	date["hours"] = int(timec[0:2])
+	date["minutes"] = int(timec[2:4])
+	date["seconds"] = int(timec[4:6])
+	date["ms"] = float(timec[6:12])/1000
+	date["lat"] = 0
+	date["long"] = 0
+	return date
+
+
+
+#bucket = s3.create_bucket('mybucket1')
+def lambda_handler(event, context):
+    #print("Received event: " + json.dumps(event, indent=2))
+
+    # Get the object from the event and show its content type
+    bucket = event['Records'][0]['s3']['bucket']['name']
+    #print(event['Records'][0]['s3']['key'])
+    key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
+    try:
+        response = s3.get_object(Bucket=bucket, Key=key)
+        print("CONTENT TYPE: " + response['ContentType'])
+        #print("text" + ['content'])
+       # print("Log stream name: ", + 2)
+        
+        #getting accessto the files and getting data
+        a = s3.get_object(Bucket="s3datafromandroid", Key = 'Array4.log')
+        array4 = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        
+        a = s3.get_object(Bucket="s3datafromandroid", Key = 'Array3.log')
+        array3 = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        
+        a = s3.get_object(Bucket="s3datafromandroid", Key = 'Array2.log')
+        array2 = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        
+        a = s3.get_object(Bucket="s3datafromandroid", Key = 'Array1.log')
+        array1 = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        
+        a = s3.get_object(Bucket="s3datafromandroid", Key = 'GPS.txt')
+        gpsdata = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        
+        a = s3.get_object(Bucket="tescop2", Key = 'number.txt')
+        picall = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        #//////
+ #/////////////////////////all above is needed for gps coordinates/////////////////////       
+        name = "Contactssssss"
+        file_num = 0
+        zero = 0
+        first = 0
+        second = 0
+        third = 0
+        fourth = 0
+        fifth = 0
+        sixth = 0
+        seventh = 0
+        eighth = 0
+        ninth = 0
+        tenth = 0
+        eleventh = 0
+        twelth = 0
+        allfreq = 0
+        durationtotal = []
+        dateor = {}
+        #code to sort picture contact number output file to use for all of file
+        i = 0
+        x = 0
+        ax = 0
+        pcount = []
+        hour = []
+        min = []
+        sec = []
+        pcarray1 = []
+        pcarray2 = []
+        pcarray3 = []
+        pcarray4 = []
+        match = 0
+        x1 = 0
+        x2 = 0
+        x3 = 0
+        x4 = 0
+        pictot = len(picall)
+        print("length: ", pictot)
+        while i < pictot:
+         counter = picall[i]
+         hours = picall[i+2]
+         minutes = picall[i+3]
+         secs = picall[i+4]
+         #print("counter: ",counter," hours: ", hours, " minutes: ",minutes, " seconds: ", secs)
+         match = int(picall[i+1])
+         if(match == 1):
+          pcarray1.insert(x1,counter)
+          x1 = x1 + 1
+         if(match == 2):
+          pcarray2.insert(x2,counter)
+          x2 = x2 + 1
+         if(match == 3):
+          pcarray3.insert(x3,counter)
+          x3 = x3 + 1
+         if(match == 4):
+          pcarray4.insert(x4,counter)
+          x4 = x4 + 1
+         pcount.insert(x,counter)
+         hour.insert(x,hours)
+         min.insert(x,minutes)
+         sec.insert(x,secs)
+         i = i + 5
+         x = x + 1
+        #finished pic total loop
+        xy = 0
+        xyz = 0
+        allpic = 0
+        print(len(pcount))
+        while(xy < len(pcount)):
+         #print("pic :", pcount[xy])
+         xyz = int(pcount[xy])
+         allpic = xyz + allpic
+         xy = xy + 1
+        print("Total contacts: ",allpic)
+        allpic1 = 0
+        xyz1 = 0
+        xy1 = 0
+        while(xy1 < len(pcarray1)):
+         #print("pic :", pcount[xy])
+         xyz1 = int(pcarray1[xy1])
+         allpic1 = xyz1 + allpic1
+         xy1 = xy1 + 1
+        print("Total from array1 = ",allpic1)
+        
+        allpic2 = 0
+        xyz2 = 0
+        xy2 = 0
+        while(xy2 < len(pcarray2)):
+         #print("pic :", pcount[xy])
+         xyz2 = int(pcarray2[xy2])
+         allpic2 = xyz2 + allpic2
+         xy2 = xy2 + 1
+        print("Total from array2 = ",allpic2)
+        
+        allpic3 = 0
+        xyz3 = 0
+        xy3 = 0
+        while(xy3 < len(pcarray3)):
+         #print("pic :", pcount[xy])
+         xyz3 = int(pcarray3[xy3])
+         allpic3 = xyz3 + allpic3
+         xy3 = xy3 + 1
+        print("Total from array3 = ",allpic3)
+        
+        allpic4 = 0
+        xyz4 = 0
+        xy4 = 0
+        while(xy4 < len(pcarray4)):
+         #print("pic :", pcount[xy])
+         xyz4 = int(pcarray4[xy4])
+         allpic4 = xyz4 + allpic4
+         xy4 = xy4 + 1
+        print("Total from array4 = ",allpic4)
+        
+        print("finished loop of number.txt")
+        pictotal1 = 0
+        pictotal2 = 0
+        pictotal3 = 0
+        pictotal4 = 0
+        pictotal5 = 0
+        pictotal6 = 0
+        foot1 = 0
+        foot2 = 0
+        foot3 = 0
+        foot4 = 0
+        foot5 = 0
+        foot6 = 0
+        
+        diff0 = 0
+        diff1 = 0
+        diff2 = 0
+        diff3 = 0
+        diff4 = 0
+        diff5 = 0
+        diff6 = 0
+        diff7 = 0
+        diff8 = 0
+        diff9 = 0
+        diff10 = 0
+        diff11 = 0
+        diff12 = 0
+        photarray = []
+        allphotct = 0
+        photct = 0
+        while(file_num < 4):
+         #retrieving the file based on the number of the file number variable
+         if(file_num == 0):
+          numbers = array1
+          name = "Log_1"
+          photarray = pcarray1
+          allphotct = allpic1
+          photct = 0
+          azt = 0
+          
+          print("file 1 access")
+         if(file_num == 1):
+          numbers = array2
+          name = "Log_2"
+          photarray = pcarray2
+          allphotct = allpic2
+          azt = 0
+          photct = 0
+          print("file 2 access")
+          
+         if(file_num == 2):
+          numbers = array3
+          photarray = pcarray3
+          allphotct = allpic3
+          azt = 0
+          photct = 0
+          name = "Log_3"
+          print("file 3 access")
+          
+         if(file_num == 3):
+          numbers = array4
+          azt = 0
+          photarray = pcarray4
+          allphotct = allpic4
+          photct = 0
+          name = "Log_4"
+          print("file 4 access")
+          
+         #printing whats in the file
+         
+         #determing amount of contacts
+         count = len(numbers) - 4
+         count = ((count)/14) 
+         count = int(count)
+         count = count 
+         
+         
+         
+         
+         if(len(photarray) == 0):
+          file_num = file_num + 1
+         
+         if(len(photarray) > 1):
+         #code to read numbers and create the distance 
+          het = 0
+          n = 19
+          y=0
+          t=0
+          h=0
+          distance1 = []
+          distance2 = []
+          timer = []
+          otime = 0
+          #calculating amount of hours device on
+          timest = {}
+          timeend= {}
+          total_time = 0
+          original = numbers[n]
+          print("original: ",original)
+          altcount = n *count
+          time_end = numbers[n]
+          timechk = 0
+          timechk = int(time_end) - int(original)
+          if(timechk < 10000000000):
+           if(int(photarray[photct]) > 0):
+            allfreq = int(photarray[photct]) + allfreq
+           total_time = 1
+          if(timechk > 10000000000 and timechk < 20000000000):
+           total_time = 2
+          print("Total Time: ",total_time)
+         
+          while y < count:
+          
+          #converting time to starndard hour:minute:second
+           otime = numbers[n]
+           timec = str(otime)
+           date = {}
+           date["hours"] = int(timec[0:2])
+           date["minutes"] = int(timec[2:4])
+           date["seconds"] = int(timec[4:6])
+           date["pic_tot"] = 0
+           
+           het = n + 14
+           nowtime = 0
+           futuretime = 0
+           difftime = 0
+           if(het < len(numbers)):
+            nowtimee = int(numbers[n])
+            futuretime = int(numbers[het])
+            difftime = futuretime - nowtimee
+            if(difftime > 13000000 and difftime < 100000000):
+             difftime = (difftime)/(10)
+            if(difftime > 100000000):
+             difftime = (difftime)/(100)
+            #print("difference : ", difftime)
+            durationtotal.insert(ax,difftime)
+           #matching time with
+          
+          
+           #matching times with the picture count from 
+           pictot = len(picall)
+           #print("length: ", pictot)
+           p = 0
+           z = 0
+           u = 0
+           #while p < pictot:
+            #hr = int(picall[z+2])
+            #minu = int(picall[z+3])
+            #ss = int(picall[z+4])
+            
+            #if(date["hours"] == hr and date["minutes"] == minu  and date["seconds"] == ss):
+             #date["pic_tot"] = pcount[u]
+             #print("matched: ", count[u])
+            #z = z + 5
+            #u = u + 1
+            #p = p + 5
+          
+           #printing picture count attached with the current time
+           #print("pic count: ",date["pic_tot"])
+          
+           if(azt < len(photarray)):
+            date["pic_tot"] = int(photarray[photct])
+            #print("times all: ", photarray[photct])
+            photct = photct + 1
+            azt = azt + 1
+           #checking if the numbers are valid
+           c = n + 3
+           c2 = n + 5
+           c3 = 0
+           if(c > len(numbers)):
+            print("null dist1")
+            c3 = 1
+           if(c2 > len(numbers)):
+            print("null dist2")
+            c3 = 1
+           if(c3 == 0):
+            check = float(numbers[n+3])
+            check2 = float(numbers[n+5])
+            
+            #calculating the frequency and pic total in distance range
+            #add code to add for pic totals in frequency of contacts
+            dateor["hours"] = int(original[0:2])
+            difference = date["hours"] - dateor["hours"]
+            difference = int(difference)
+            if(difference == 0):
+             diff0 = int(date["pic_tot"]) + diff0
+             zero = zero + 1
+            if(difference == 1):
+             diff1 = int(date["pic_tot"]) + diff1
+             first = first + 1
+            if(difference == 2):
+             diff2 = int(date["pic_tot"]) + diff2
+             second = second + 1
+            if(difference == 3):
+             diff3 = int(date["pic_tot"]) + diff3
+             third = third + 1
+            if(difference == 4):
+             diff4 = int(date["pic_tot"]) + diff4
+             fourth = fourth + 1
+            if(difference == 5):
+             diff5 = int(date["pic_tot"]) + diff5
+             fifth = fifth + 1
+            if(difference == 6):
+             diff6 = int(date["pic_tot"]) + diff6
+             sixth = sixth + 1
+            if(difference == 7):
+             diff7 = int(date["pic_tot"]) + diff7
+             seventh = seventh + 1
+            if(difference == 8):
+             diff8 = int(date["pic_tot"]) + diff8
+             eighth = eighth + 1
+            if(difference == 9):
+             diff9 = int(date["pic_tot"]) + diff9
+             ninth = ninth + 1
+            if(difference == 10):
+             diff10 = int(date["pic_tot"]) + diff10
+             tenth = tenth + 1
+            if(difference == 11):
+             diff11 = int(date["pic_tot"]) + diff11
+             eleventh = eleventh + 1
+            if(difference == 12):
+             diff12 = int(date["pic_tot"]) + diff12
+             twelth = twelth + 1
+            #sum
+            #date["pic_tot"] = 0
+            #print("zeros : ", zero)
+            #print("ones :", first)
+            #comparing the distances for sorting 
+           if((check > 0.0 or check2 > 0.0) and c3 == 0):
+            dist1 = float(numbers[n+3])
+            dist2 = float(numbers[n+5])
+            dist1 = (dist1)
+            dist2 = (dist2)
+            if(dist1 > 0.0 and dist1 < 12.0):
+             pictotal1 = pictotal1 + int(date["pic_tot"])
+             foot1 = foot1 + 1
+            if(dist1 > 12.0 and dist1 < 24.0):
+             foot2 = foot2 + 1
+             pictotal2 = pictotal2 + int(date["pic_tot"])
+            
+            if(dist1 > 24.0 and dist1 < 36.0):
+             foot3 = foot3 + 1
+             pictotal3 = pictotal3 + int(date["pic_tot"])
+           
+            if(dist1 > 36.0 and dist1 < 48.0):
+             foot4 = foot4 + 1
+             pictotal4 = pictotal4 + int(date["pic_tot"])
+           
+            if(dist1 > 48.0 and dist1 < 60.0):
+             foot5 = foot5 + 1
+             pictotal5 = pictotal5 + int(date["pic_tot"])
+           
+            if(dist1 > 60.0 and dist1 < 72.0):
+             foot6 = foot6 + 1 
+             pictotal6 = pictotal6 + int(date["pic_tot"])
+           
+          #distance arrays created
+            distance1.insert(h, dist1)
+            distance2.insert(h, dist2)
+            timer.insert(h, otime)
+           #print(timer[h])
+           #print(distance1[h])
+           y = y + 1
+           h = h + 1
+           n = n + 14
+     
+         #sorting the distances
+          distance1.sort(key=float)
+          distance2.sort(key=float)
+          sumdistance1 = 0.0
+          sumdistance2 = 0.0
+          total1 = 0.0
+          total2 = 0.0
+          az = 0
+         
+          while az < len(distance1):
+           if(float(distance1[az]) > 0.0):
+            total1 = total1 + float(distance1[az])
+           az = az + 1
+          sumdistance1 = (total1)/(len(distance1))
+          print("Total sum 1: ",sumdistance1)
+         #sorting the distances
+         
+          az = 0
+          while az < len(distance2):
+           if(float(distance2[az]) > 0.0):
+            total2 = total2 + float(distance2[az])
+           az = az + 1
+          sumdistance2 = (total2)/(len(distance2))
+          print("Total sum 2: ",sumdistance2)
+          #sorting the distances
+          sumdist_total = sumdistance1 + sumdistance2
+          sumdist_total = (sumdist_total)/(2)
+          
+          sumd1 = 0
+          sumd2 = 0
+          sumd3 = 0
+          sumd4 = 0
+          if(file_num == 0):
+           sumd1 = sumdist_total
+          if(file_num == 1):
+           sumd2 =  sumdist_total
+          if(file_num == 2):
+           sumd3 = sumdist_total
+          if(file_num == 3):
+           sumd4 = sumdist_total
+         
+         file_num = file_num + 1
+        
+        #calculating the frequency
+        freq = zero + first + second + third + fourth + fifth + sixth + seventh + eighth + ninth + tenth + eleventh + twelth
+        
+        freq = (freq)/(total_time)
+        freq2 = allpic
+        freq2 = (freq2)/(total_time)
+        freq2 = int(freq2)
+        print("freq 2: ", freq2)
+        
+        #calculating the average distance
+        allsums = 0
+        calc = 0
+        checkvs = 4
+        if(sumd1 == 0):
+         checkvs = checkvs - 1
+         allsums = sumd2 + sumd3 + sumd4 + sumd1
+         
+        if(sumd2 == 0):
+         allsums = sumd1 + sumd3 + sumd4 + sumd1
+         checkvs = checkvs - 1
+        if(sumd3 == 0):
+         allsums = sumd1 + sumd2 + sumd4 + sumd3
+         checkvs = checkvs - 1
+        if(sumd4 == 0):
+         allsums = sumd1 + sumd2 + sumd3
+         checkvs = checkvs - 1
+        print("checkvs = ", checkvs)
+        allsums = (allsums)/(checkvs)
+        allsums = float(allsums)
+        #print("Average Distance: ",sumdist_total)
+        allsums = float("{0:.3f}".format(allsums))
+        allsums = str(allsums)
+        
+        #distance correction
+        allct = 0
+        allci = 0
+        allct = pictotal1 + pictotal2 + pictotal3 + pictotal4 + pictotal5 + pictotal6
+        while(allct < allpic):
+         if(allct == allpic):
+          allci = 7
+         if(allci == 0):
+          if(allct < allpic):
+           pictotal1 = pictotal1 + 1
+           allct = allct + 1
+           allci = allci + 1
+         if(allci == 1):
+          if(allct < allpic):
+           pictotal2 = pictotal2 + 1
+           allct = allct + 1
+           allci = allci + 1
+         if(allci == 2):
+          if(allct < allpic):
+           pictotal3 = pictotal3 + 1
+           allct = allct + 1
+           allci = allci + 1
+         if(allci == 3):
+          if(allct < allpic):
+           pictotal4 = pictotal4 + 1
+           allct = allct + 1
+           allci = allci + 1
+         if(allci == 4):
+          if(allct < allpic):
+           pictotal5 = pictotal5 + 1
+           allct = allct + 1
+           allci = allci + 1
+         if(allci == 5):
+          if(allct < allpic):
+           pictotal6 = pictotal6 + 1
+           allct = allct + 1
+           allci = 0
+        
+        #calculating the average duration
+        dura = 0
+        duratot = 0
+        durall = 0
+        durall = len(durationtotal)
+        while(dura < len(durationtotal)):
+         duratot = duratot + int(durationtotal[dura])
+         dura = dura + 1
+        
+        duratot = (duratot)/(durall)
+        duratot = int(duratot)
+        duratot = str(duratot)
+        zyh = 0
+        print("duratot = ", duratot)
+        if(int(duratot[0:2]) > 60):
+         yh = 0
+         yh = int(duratot[0:2])/(60)
+         yh = str(yh)
+         print("yh =",yh)
+         zyh = 1
+         
+        if(len(duratot) == 7):
+         duratot = "0" + duratot
+         duratot = duratot[0:2] + "." + duratot[3:6]
+         duratot = str(duratot)
+        if(len(duratot) == 8):
+         if(zyh == 0):
+          duratot = duratot[0:2] + "." + duratot[3:6]
+          names = 8
+          print("len = ", 8)
+          duratot = str(duratot)
+         if(zyh == 1):
+          duratot = yh + "." + duratot[3:6]
+          duratot = str(duratot)
+          
+        if(len(duratot) == 9):
+         if(zyh == 0):
+          duratot = duratot[0:2] + "." + duratot[3:6]
+          names = 8
+          print("len = ", 9)
+          duratot = str(duratot)
+         if(zyh == 1):
+          duratot = yh + "." + duratot[3:6]
+          duratot = str(duratot)
+        if(dist1 > 0.0 or dist2 > 0.0):
+       #  dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        # table = dynamodb.Table('Sort_Distlog_1')
+         #table.put_item(
+          #     Item={
+           #        'Rank': 1 ,
+            #       'Average Distance(m)':sumdist_total,
+             #      'Total Contacts': allpic,
+              #     'Frequency': freq2,
+               #    '0 - 1 ft': pictotal1,
+                #   '1 - 2 ft': pictotal2,
+                 #  '2 - 3 ft': pictotal3,
+                  # '3 - 4 ft': pictotal4,
+          #         '4 - 5 ft': pictotal5,
+           #        '5 - 6 ft': pictotal6,
+                  
+            #   }  
+             #  )
+         table = dynamodb.Table('diseasecontacts-mobilehub-1329339891-Average_Contacts1')
+         table.put_item(
+               Item={
+                'Total Contacts': allpic,
+                'Average Distance (in)': allsums,
+                'Average Duration (sec)': duratot,
+                'Average Frequency (contacts/hour)': freq2,
+                'Contacts (0 to 1 ft)': pictotal1,
+                'Contacts (1 to 2 ft)': pictotal2,
+                'Contacts (2 to 3 ft)': pictotal3,
+                'Contacts (3 to 4 ft)': pictotal4,
+                'Contacts (4 to 5 ft)': pictotal5,
+                'Contacts (5 to 6 ft)': pictotal6,
+               }
+               )
+        print("freq: ", allfreq)
+        print("Total Contacts: ",allpic)
+        print("within 0-1 foot: ",pictotal1)
+        print("within 1-2 feet:",pictotal2)
+        print("within 2-3 feet:",pictotal3)
+        print("within 3-4 feet:",pictotal4)
+        print("within 4-5 feet:",pictotal5)
+        print("within 5-6 feet:",pictotal6)
+        print("freq: ",freq)
+         #return response['ContentType']
+        
+    except Exception as e:
+       print(e)
+       print('Error getting object {} from bucket {}. Make sure they exist and your bucket is in the same region as this function.'.format(key, bucket))
+       raise e
+       

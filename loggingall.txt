@@ -1,0 +1,612 @@
+
+import json
+import urllib.parse
+import boto3
+import string
+import re
+
+print('Loading function')
+word = "Sample"
+s3 = boto3.client('s3')
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+table = dynamodb.Table('diseasecontacts-mobilehub-1329339891-Individual_Contacts2')
+
+def changeTime(time):
+	timec = str(time)
+	date = {}
+	date["hours"] = int(timec[0:2])
+	date["minutes"] = int(timec[2:4])
+	date["seconds"] = int(timec[4:6])
+	date["ms"] = float(timec[6:12])/1000
+	date["lat"] = 0
+	date["long"] = 0
+	return date
+
+
+
+#bucket = s3.create_bucket('mybucket1')
+def lambda_handler(event, context):
+    #print("Received event: " + json.dumps(event, indent=2))
+
+    # Get the object from the event and show its content type
+    bucket = event['Records'][0]['s3']['bucket']['name']
+    #print(event['Records'][0]['s3']['key'])
+    key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
+    try:
+        response = s3.get_object(Bucket=bucket, Key=key)
+        print("CONTENT TYPE: " + response['ContentType'])
+        #print("text" + ['content'])
+       # print("Log stream name: ", + 2)
+        array1 = []
+        array2 = []
+        array3 = []
+        array4 = []
+        
+        photocount = []
+        numbers = []
+        
+        #getting access to the file for gps coordinates
+        a = s3.get_object(Bucket="s3datafromandroid", Key = 'GPS.txt')
+        gpsall = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        
+        a = s3.get_object(Bucket="s3datafromandroid", Key = 'Array1.log')
+        array1 = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        
+        a = s3.get_object(Bucket="s3datafromandroid", Key = 'Array2.log')
+        array2 = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        
+        a = s3.get_object(Bucket="s3datafromandroid", Key = 'Array3.log')
+        array3 = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        
+        a = s3.get_object(Bucket="s3datafromandroid", Key = 'Array4.log')
+        array4 = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        
+        a = s3.get_object(Bucket="tescop3", Key = 'number.txt')
+        photocount = re.findall(r"[-+]?\d*\.\d+|\d+", a['Body'].read().decode('utf-8'))
+        #starting gps parsing
+        numbers = gpsall
+        th = 9
+        latatitude = []
+        longitude = []
+        gpshours = []
+        gpsminutes = []
+        gpsseconds = []
+        i=0
+        gpscount = 0
+        hrs = 0
+        minsg = 0
+        #print(len(numbers))
+        while th < len(numbers):
+         #print(numbers[th])
+		       hrs = (numbers[th-3])
+		       minsg = int(numbers[th-2])
+		       gpshours.insert(i,hrs)
+		       gpsminutes.insert(i,minsg)
+		       gpsseconds.insert(i,numbers[th-1])
+		       print("gps hours ",gpshours[i])
+		       latatitude.insert(i, numbers[th])
+		       longitude.insert(i, numbers[th+1])
+		       th = th + 8
+		       i = i + 1
+		       gpscount = gpscount + 1
+ #///////////////////////////////all above is needed for gps coordinates///////////////////// 
+        #code to create arrays with the photo data
+        pics = 0
+        picn = 0
+        pcount = []
+        phour = []
+        pmin = []
+        psec = []
+        pcarray1 = []
+        pcarray2 = []
+        pcarray3 = []
+        pcarray4 = []
+        match = 0
+        x1 = 0
+        x2 = 0
+        x3 = 0
+        x4 = 0
+        pictot = len(photocount)
+        while picn < pictot:
+         counter = photocount[picn]
+         hours = photocount[picn+2]
+         minutes = photocount[picn+3]
+         secs = photocount[picn+4]
+         #print("counter: ",counter," hours: ", hours, " minutes: ",minutes, " seconds: ", secs)
+         match = int(photocount[picn+1])
+         if(match == 1): 
+          pcarray1.insert(x1,counter)
+          x1 = x1 + 1
+         if(match == 2): 
+          pcarray2.insert(x2,counter)
+          x2 = x2 + 1
+         if(match == 3): 
+          pcarray3.insert(x3,counter)
+          x3 = x3 + 1
+         if(match == 4): 
+          pcarray4.insert(x4,counter)
+          x4 = x4 + 1
+         pcount.insert(pics,counter)
+         phour.insert(pics,hours)
+         pmin.insert(pics,minutes)
+         psec.insert(pics,secs)
+         picn = picn + 5
+         pics = pics + 1
+         #code ending pic data in an array
+         allpic1 = 0
+        xyz1 = 0
+        xy1 = 0
+        while(xy1 < len(pcarray1)):
+         #print("pic :", pcount[xy])
+         xyz1 = int(pcarray1[xy1])
+         allpic1 = xyz1 + allpic1
+         xy1 = xy1 + 1
+        print("Total from array1 = ",allpic1)
+        
+        allpic2 = 0
+        xyz2 = 0
+        xy2 = 0
+        while(xy2 < len(pcarray2)):
+         #print("pic :", pcount[xy])
+         xyz2 = int(pcarray2[xy2])
+         allpic2 = xyz2 + allpic2
+         xy2 = xy2 + 1
+        print("Total from array2 = ",allpic2)
+        
+        allpic3 = 0
+        xyz3 = 0
+        xy3 = 0
+        while(xy3 < len(pcarray3)):
+         #print("pic :", pcount[xy])
+         xyz3 = int(pcarray3[xy3])
+         allpic3 = xyz3 + allpic3
+         xy3 = xy3 + 1
+        print("Total from array3 = ",allpic3)
+        
+        allpic4 = 0
+        xyz4 = 0
+        xy4 = 0
+        while(xy4 < len(pcarray4)):
+         #print("pic :", pcount[xy])
+         xyz4 = int(pcarray4[xy4])
+         allpic4 = xyz4 + allpic4
+         xy4 = xy4 + 1
+        print("Total from array4 = ",allpic4)
+        
+        print("Done pics: ")
+        photarray = []
+        allphotct = 0
+        photct = 0
+        file_num = 0
+        ax = 0
+        while(file_num < 4):
+         #retrieving the file based on the number of the file number variable
+         if(file_num == 0):
+          numbers = array1
+          photarray = pcarray1
+          allphotct = allpic1
+          photct = 0
+          name = "Log_1"
+          ax = 0
+          azt = 0
+          ah = 0
+          arnum = 1
+          print("file 1 access")
+          
+         if(file_num == 1):
+          numbers = array2
+          photarray = pcarray2
+          allphotct = allpic2
+          azt = 0
+          
+          arnum = 2
+          photct = 0
+          name = "Log_2"
+          
+          ah = 0
+          print("file 2 access")
+          
+         if(file_num == 2):
+          numbers = array3
+          photarray = pcarray3
+          allphotct = allpic3
+          
+          photct = 0
+          arnum = 3
+          name = "Log_3"
+          
+          azt = 0
+          ah = 0
+          print("file 3 access")
+          
+         if(file_num == 3):
+          numbers = array4
+          photarray = pcarray4
+          allphotct = allpic4
+          
+          arnum = 4
+          photct = 0
+          name = "Log_4"
+          azt = 0
+          ah = 0
+          print("file 4 access")
+         
+         #determing amount of contacts
+         count = len(numbers) - 4
+         count = ((count)/14) 
+         count = int(count)
+         count = count -1
+         
+         #code to read numbers and create the distance 
+         n=19
+         y=0
+         t=0
+         h=0
+         timediff = 0
+         distance1 = []
+         distance2 = []
+         time1 = 0
+         time2 = 0
+         duration1 = 0
+         if(len(photarray) == 0):
+          file_num = file_num + 1
+         vchk = 0
+         if(len(photarray) > 0 ):
+          while(vchk < 1): 
+          #print("testing worked")
+            n = 4
+            print("test first init: ", numbers[n])
+            timest = numbers[n]
+            fdist = 0
+            sdist = 0
+            fdur = 0
+            fdist = float(numbers[n+4])
+            sdist = float(numbers[n+6])
+            ax = ax + 1
+            if(fdist == 0.0):
+             fdist = sdist
+            if(sdist == 0.0):
+             fdist = fdist
+            if(fdist > 0.0 and sdist > 0.0):
+             fdist = fdist + sdist
+             fdist = (fdist)/2
+             fdist = str(fdist)
+            fdist = str(fdist)
+            fdist = float(fdist)
+            fdist = float("{0:.3f}".format(fdist))
+            fdist = str(fdist)
+            later = 0.0
+            longer = 0.0
+            later = latatitude[ax]
+            longer = longitude[ax]
+            n = 19
+            timest = int(timest[0:6])
+            fdur = int(numbers[n]) - int(numbers[4])
+            #if(fdur > 13000000):
+             #fdur = (fdur)/(10)
+            fdur = str(fdur)
+            if(len(fdur) == 6):
+             fdur = "00" + fdur
+             fdur = fdur[0:2] + "." + fdur[3:6]
+            if(len(fdur) == 7):
+             fdur = "0" + fdur
+             #print("timediff = ", timediff)
+             fdur = fdur[0:2] + "." + fdur[3:6]
+             #diffnew["mili"] = int(timediff[3:8])
+             
+            if(len(fdur) == 8):
+             #print("timediff = ", timediff)
+             if(float(fdur) > 13000000):
+              fdur = float(fdur)/(10)
+              fdur = int(fdur)
+              fdur = str(fdur)
+              
+             fdur = fdur[0:2] + "." + fdur[3:6]
+            if(len(fdur) == 9):
+             #print("timediff = ", timediff)
+             if(float(fdur) > 100000000):
+              fdur = float(fdur)/(100)
+              fdur = int(fdur)
+              fdur = str(fdur)
+             fdur = fdur[0:2] + "." + fdur[3:6]
+            if(int(photarray[photct]) > 0):
+             table.put_item(
+                    Item={
+                        'Reading Number': ax,
+                        'Contacts': int(photarray[photct]),
+                        'Distance (in)': fdist,
+                        'Duration (sec)': fdur,
+                        'Latitude': later,
+                        'Longitude': longer,
+                        'Time Encountered': timest,
+                     
+                  
+                    }  
+                    )
+            
+            n = 19
+            vchk = vchk + 1
+            photct = photct + 1
+         if(len(photarray) > 1):
+          #print("nums : ",numbers[n])
+          #loop to create the distance arrays
+          
+          while y < count:
+           ax = ax + 1
+           #code to determine time difference between 2 times
+           time1 = numbers[n]
+           #print("nums : ",numbers[n])
+           new_time1 = changeTime(time1)
+           altn = 0
+           altn = n + 14
+           if(altn > len(numbers)):
+            print()
+            not_num = 1
+           ah = 0
+           ah = n + 14
+           if(ah < len(numbers)):
+            time2 = numbers[n+14]
+            new_time2 = changeTime(time2)
+            timediff = int(numbers[n+14]) - int(numbers[n])
+            not_num = 2
+          
+           gps_x = 0
+           yt = 0
+           zt = 0
+           zyt = 0
+           new_time1["pic_tot"] = 0
+           if(int(new_time1["hours"]) < 10):
+            new_time1["hours"] = "0" + str(new_time1["hours"])
+           if(int(new_time1["minutes"]) < 10):
+            new_time1["minutes"] = "0" + str(new_time1["minutes"])
+           if(int(new_time1["seconds"]) < 10):
+            new_time1["seconds"] = "0" + str(new_time1["seconds"])
+           while(gps_x < gpscount):
+        
+            #gpshours[gps_x] = float(gpshours[gps_x])
+            print("new gps time", gpshours[gps_x])
+            yzt = 0
+            yzt = int(gpshours[gps_x])
+            yzt = yzt - 5
+            if(yzt < 10):
+             yzt = "0" + str(yzt)
+            yzt = str(yzt)
+            #gpshours[gps_x] = str(yzt)
+            print("subtracted gps time", str(yzt))
+            print("")
+            if(float(new_time1["hours"]) == float(yzt) and float(new_time1["minutes"]) == float(gpsminutes[gps_x]) and float(new_time1["seconds"]) == float(gpsseconds[gps_x])):
+             new_time1["lat"] = latatitude[gps_x]
+             new_time1["long"] = longitude[gps_x]
+             print("matched")
+           
+            if(not_num == 2):
+             if(new_time2["hours"] == gpshours[gps_x] and new_time2["minutes"] == gpsminutes[gps_x] and new_time2["seconds"] == gpsseconds[gps_x]):
+              new_time2["lat"] = latatitude[gps_x]
+              new_time2["long"] = longitude[gps_x]
+            gps_x = gps_x + 1
+          
+          #//////////////calcuatling difference between times
+          #time_dif = different(new_time1,new_time2)
+          #print(time_dif)
+          #/////////////////matching the time with the amount of contacts that resulted
+          #matching times with the picture count from 
+           if(new_time1["lat"] == 0):
+            new_time1["lat"] = latatitude[ax]
+           if(new_time1["long"] == 0):
+            new_time1["long"] = longitude[ax]
+           pictot = len(photocount)
+          #print("length: ", pictot)
+           pe = 0
+           ze = 0
+           ue = 0
+          #while pe < pictot:
+           #phr = int(photocount[ze+2])
+           #pminu = int(photocount[ze+3])
+           #pss = int(photocount[ze+4])
+           
+           #if(new_time1["hours"] == phr and new_time1["minutes"] == pminu  and new_time1["seconds"] == pss):
+            #new_time1["pic_tot"] = pcount[u]
+            #print("matched: ", pcount[u])
+           #ze = ze + 5
+           #ue = ue + 1
+           #pe = pe + 5
+           if(photct < len(photarray)):
+            new_time1["pic_tot"] = photarray[photct]
+            photct = photct + 1
+           #distance arrays created
+           dist1 = numbers[n+3]
+           dist2 = numbers[n+5]
+           distance1.insert(h, dist1)
+           distance2.insert(h, dist2)
+           dist1 = float(dist1)
+           dist2 = float(dist2)
+           dist1 = dist1
+           dist2 = dist2
+           distall = dist1 + dist2
+           distall = (distall)/(2)
+           distall = str(distall)
+           happy = ""
+        #   if(int(new_time1["hours"]) < 10):
+         #   new_time1["hours"] = "0" + str(new_time1["hours"])
+          # if(int(new_time1["minutes"]) < 10):
+           # new_time1["minutes"] = "0" + str(new_time1["minutes"])
+        #   if(int(new_time1["seconds"]) < 10):
+         #   new_time1["seconds"] = "0" + str(new_time1["seconds"])
+           timeall = str(new_time1["hours"])  + str(new_time1["minutes"])  + str(new_time1["seconds"])
+           timeall = int(timeall)
+          #print("combined: ",happy)
+          
+          
+           look = 0
+           looks = len(str(timediff))
+           #print("len: ", look)
+           look = {}
+           look["sec"] = 0
+           look["mili"] = 0
+           if(looks == 7):
+            #print("it equals 7")
+            xix = 0
+           if(looks == 8):
+            #print("it equals 8")
+            xiy = 0
+            look["sec"] = str(look["sec"])
+           if(looks == 9):
+            #print("it equals 9")
+            xiz = 0
+           
+           finaldist = 0.0 
+           if(float(dist1) == 0.0):
+            finaldist = dist2
+            finaldist = float(finaldist)
+            finaldist = float("{0:.3f}".format(finaldist))
+           if(float(dist2) == 0.0):
+            finaldist = dist1
+            finaldist = float("{0:.3f}".format(finaldist))
+            finaldist = str(finaldist)
+           if(float(dist1) > 0.0 and float(dist2) > 0.0):
+            finaldist = float(dist1) + float(dist2)
+            finaldist = (finaldist)/2
+            finaldist = float("{0:.3f}".format(finaldist))
+            finaldist = str(finaldist)
+            timediff = str(timediff)
+           
+           if(float(timediff) > 13000000):
+            timediff = (int(timediff))/(10)
+            timediff = int(timediff)
+           if(float(timediff) > 13000000 and float(timediff) < 100000000):
+            timediff = (int(timediff))/(100)
+            timediff = int(timediff)
+            
+           timediff = str(timediff)
+           if(len(timediff) == 6):
+             timediff = "00" + timediff
+             timediff = timediff[0:2] + "." + timediff[3:6]
+           if(len(timediff) == 7):
+            timediff = "0" + timediff
+             #print("timediff = ", timediff)
+            timediff = timediff[0:2] + "." + timediff[3:6]
+             #diffnew["mili"] = int(timediff[3:8])
+             
+           if(len(timediff) == 8):
+             #print("timediff = ", timediff)
+             print("timediff ",timediff)
+             if(float(timediff) > 13000000):
+              timediff = (float(timediff))/(10)
+              
+              timediff = str(timediff)
+             if(int(timediff[0:2]) > 13):
+              timediff[0:2] = (int(timediff))/(10)
+              timediff[0:2] = int(timediff)
+              timediff[0:2] = str(timediff)
+             timediff = timediff[0:2] + "." + timediff[3:6]
+           if(len(timediff) == 8):
+             #print("timediff = ", timediff)
+            print("timediff ",timediff)
+            if(float(timediff) > 100000000):
+             timediff = (float(timediff))/(100)
+             timediff = str(timediff)
+            timediff = timediff[0:2] + "." + timediff[3:6]
+             #timediff = int(timediff)
+             #diffnew["secs"] = int(timediff[0:2])
+             #diffnew["mili"] = int(timediff[3:8])
+           newnum = ""
+           newnum = str(arnum) + str(ax)
+           newnum = int(newnum)
+           new_time1["lat"] = str(new_time1["lat"])
+           new_time1["long"] = str(new_time1["long"])
+           print("time all end: ", timeall)
+            #timeall = int(timeall)
+            #putting the item in the table
+           if(int(new_time1["pic_tot"]) > 0): 
+            table.put_item(
+                Item={
+                    'Reading Number': ax,
+                    'Contacts': int(new_time1["pic_tot"]),
+                    'Distance (in)': str(finaldist),
+                    'Duration (sec)': str(timediff),                    
+                    'Latitude': new_time1["lat"],
+                    'Longitude': new_time1["long"],
+                    'Time Encountered': timeall,
+                   
+                  
+                }  
+                )
+          
+   
+           y = y + 1
+           t = t + 1
+           h = n + 1
+           n = n + 14
+           
+           
+         
+     
+         file_num = file_num + 1
+         while(photct < len(photarray)):
+          ax = ax + 1
+          
+          new_time1["lat"] = latatitude[ax]
+          new_time1["long"] = longitude[ax]
+          new_time1["pic_tot"] = photarray[photct]
+          altnn = 0
+          altnn = n + 14
+          if(altnn < len(numbers)):
+           print("last number time is: ", numbers[altnn])
+          timediff = float(timediff) - 1.0
+          timediff = float("{0:.3f}".format(timediff))
+          timediff = str(timediff)
+          if(len(timediff) == 6):
+            print("timediff", timediff)
+            #timediff = "00" + timediff
+            #timediff = timediff[0:2] + "." + timediff[3:6]
+          if(len(timediff) == 7):
+           #timediff = "0" + timediff
+           print("timediff = ", timediff)
+           timediff= timediff[0:2] + "." + timediff[3:6]
+          alz = 0
+          calz = 0
+          while(alz < len(distance1)):
+           calz = float(distance1[alz]) + float(distance2[alz])
+           alz = alz + 1
+          calz = (calz)/(len(distance1))
+          finaldist = float(calz)
+          finaldist = float("{0:.3f}".format(finaldist))
+          finaldist = str(finaldist)
+          print("kjljljkl  ", calz)
+          if(len(timediff) == 8):
+           print("timediff = ", timediff)
+           if(float(timediff) > 13000000):
+            timediff = float(timediff)/(10)
+            timediff = str(timediff)
+          if(len(timediff) == 9):
+           print("timediff = ", timediff)
+           if(float(timediff) > 13000000):
+            timediff = float(timediff)/(100)
+            timediff = str(timediff)
+          finaldist = float(finaldist) - 2.0
+          finaldist = str(finaldist)
+          timeall = int(timeall) + 5
+          if(int(new_time1["pic_tot"]) > 0):
+           table.put_item(
+                 Item={
+                     'Reading Number': ax,
+                     'Contacts': int(new_time1["pic_tot"]),
+                     'Distance (in)': str(finaldist),
+                     'Duration (sec)': str(timediff),                    
+                     'Latitude': new_time1["lat"],
+                     'Longitude': new_time1["long"],
+                     'Time Encountered': timeall,
+                    
+                  
+                 }  
+                 )
+          photct = photct + 1
+          
+           #calculating the total from all
+        
+        
+    except Exception as e:
+       print(e)
+       print('Error getting object {} from bucket {}. Make sure they exist and your bucket is in the same region as this function.'.format(key, bucket))
+       raise e
+   
